@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulários de Gestão</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+        }
+        #menu {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 200px;
+            background-color: #304949;
+            color: #83bfbf;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        #menu a {
+            display: block;
+            margin: 10px 0;
+            text-decoration: none; /* Remove o sublinhado */
+            color: #83bfbf; /* Cor do texto clara */
+            font-size: 13px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #2b3e3e;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        #menu a:hover {
+            background-color: #04f2f9;
+            color: #333; /* Cor do texto escura no hover */
+        }
+        h2 {
+            color: #395d5e;
+        }
+        form {
+            margin-left: 240px; /* Espaço para o menu */
+            margin-top: 1px;
+            margin-bottom: 450px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            background-color: #f9f9f9;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        textarea {
+            width: 100%;
+            height: 600px;
+            padding: 3px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: darkgray;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="menu">
+    <h4>Índice Estratégico</h4>
+    <div id="menu-items"></div> 
+    <br><button onclick="saveState()">Salvar Estado</button><br>
+    <br><button onclick="loadState()">Carregar Estado</button>
+</div>
+
+<div id="forms-container"></div>
+
+<script>
+    const formTitles = [
+        "Apoio texto", "Finanças", "Sucesso do Cliente", "Processos Internos",
+        "Redução de Custos", "Renovação de Clientes", "Melhorar o Controle de Custos",
+        "Pessoas e Capacitação", "Contratar os Melhores Talentos", "Crescimento da Produtividade",
+        "Atribuir Novos Serviços", "Gestão de Projetos", "Oferecer Treinamentos aos Funcionários",
+        "Estabilidade Financeira da Empresa", "Qualidade e Velocidade de Atendimento",
+        "Maior Eficiência Operacional", "Potencializar o Trabalho em Equipe",
+        "Auditorias em Dia", "Satisfação dos Clientes", "Garantir a Melhoria Contínua",
+        "Ter um Ambiente Inovador"
+    ];
+
+    function createForms() {
+        const container = document.getElementById("forms-container");
+        const menuItems = document.getElementById("menu-items");
+
+        formTitles.forEach(title => {
+            const form = document.createElement("form");
+            form.id = `form-${title.replace(/\s+/g, '-')}`; // Adiciona um ID ao formulário
+            form.innerHTML = `
+                <h2>${title}</h2>
+                <label for="textarea-${title.replace(/\s+/g, '-')}">${title}:</label>
+                <textarea id="textarea-${title.replace(/\s+/g, '-')}" rows="4" oninput="updateMenuColor('${title}')"></textarea>
+            `;
+            container.appendChild(form);
+
+            // Criar o item do menu
+            const menuItem = document.createElement("a");
+            menuItem.href = `#form-${title.replace(/\s+/g, '-')}`; // Link para o formulário
+            menuItem.innerText = title;
+            menuItem.id = `menu-item-${title.replace(/\s+/g, '-')}`; // Adiciona um ID ao item do menu
+            menuItems.appendChild(menuItem);
+        });
+    }
+
+    function updateMenuColor(title) {
+        const textArea = document.getElementById(`textarea-${title.replace(/\s+/g, '-')}`);
+        const menuItem = document.getElementById(`menu-item-${title.replace(/\s+/g, '-')}`);
+        if (textArea.value.trim() !== "") {
+            menuItem.style.color = "yellow"; // Muda a cor para amarelo se preenchido
+        } else {
+            menuItem.style.color = "#83bfbf"; // Cor padrão se não preenchido
+        }
+    }
+
+    function saveState() {
+        const state = {};
+        formTitles.forEach(title => {
+            const textArea = document.getElementById(`textarea-${title.replace(/\s+/g, '-')}`);
+            if (textArea) {
+                state[title] = textArea.value; // Captura o valor
+            }
+        });
+
+        const json = JSON.stringify(state);
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const fileName = prompt("Nomeie o arquivo (sem extensão):", "estado_formulario") || "estado_formulario";
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${fileName}.json`;
+        document.body.appendChild(a); // Adiciona o link ao DOM
+        a.click();
+        document.body.removeChild(a); // Remove o link após o download
+        URL.revokeObjectURL(url); // Libera a URL
+    }
+
+    function loadState() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json";
+        input.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = event => {
+                const state = JSON.parse(event.target.result);
+                for (const title in state) {
+                    const textArea = document.getElementById(`textarea-${title.replace(/\s+/g, '-')}`);
+                    if (textArea) {
+                        textArea.value = state[title];
+                        updateMenuColor(title); // Atualiza a cor do menu ao carregar o estado
+                    }
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    // Inicializa os formulários ao carregar a página
+    createForms();
+</script>
+
+</body>
+</html>
