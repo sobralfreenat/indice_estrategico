@@ -30,11 +30,11 @@
             padding: 10px;
             border-radius: 5px;
             background-color: #2b3e3e;
-            transition: background-color 0.3s, color 0.3s;
+            transition: background-color 0.3s, color 0.3s, border 0.3s;
         }
         #menu a:hover {
-            background-color: #04f2f9;
-            color: #333; /* Cor do texto escura no hover */
+            background-color: black !important;
+            color: gray; /* Cor do texto escura no hover */
         }
         h2 {
             color: #395d5e;
@@ -98,6 +98,8 @@
         "Ter um Ambiente Inovador"
     ];
 
+    const clickedMenuItems = new Set(); // Conjunto para armazenar itens clicados
+
     function createForms() {
         const container = document.getElementById("forms-container");
         const menuItems = document.getElementById("menu-items");
@@ -117,8 +119,29 @@
             menuItem.href = `#form-${title.replace(/\s+/g, '-')}`; // Link para o formulário
             menuItem.innerText = title;
             menuItem.id = `menu-item-${title.replace(/\s+/g, '-')}`; // Adiciona um ID ao item do menu
+            menuItem.onclick = () => selectMenuItem(menuItem); // Adiciona evento de clique
             menuItems.appendChild(menuItem);
         });
+    }
+
+    function selectMenuItem(menuItem) {
+        // Reseta a cor de fundo de todos os itens do menu
+        const allMenuItems = document.querySelectorAll('#menu a');
+        allMenuItems.forEach(item => {
+            item.style.backgroundColor = '#2b3e3e'; // Cor padrão
+        });
+
+        // Muda a borda do item clicado anteriormente para cinza claro
+        if (clickedMenuItems.has(menuItem.id)) {
+            menuItem.style.border = '2px solid lightgray'; // Mantém a borda cinza claro
+        } else {
+            // Adiciona a borda cinza claro ao item clicado
+            menuItem.style.border = '2px solid lightgray'; 
+            clickedMenuItems.add(menuItem.id); // Adiciona ao conjunto de itens clicados
+        }
+
+        // Muda a cor de fundo do item selecionado
+        menuItem.style.backgroundColor = 'black';
     }
 
     function updateMenuColor(title) {
