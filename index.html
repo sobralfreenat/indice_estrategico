@@ -24,8 +24,8 @@
         #menu a {
             display: block;
             margin: 10px 0;
-            text-decoration: none; /* Remove o sublinhado */
-            color: #83bfbf; /* Cor do texto clara */
+            text-decoration: none;
+            color: #83bfbf;
             font-size: 13px;
             padding: 10px;
             border-radius: 5px;
@@ -34,13 +34,17 @@
         }
         #menu a:hover {
             background-color: black !important;
-            color: gray; /* Cor do texto escura no hover */
+            color: gray;
+        }
+        #menu a.active {
+            background-color: black !important;
+            border: 2px solid lightgray;
         }
         h2 {
             color: #395d5e;
         }
         form {
-            margin-left: 240px; /* Espaço para o menu */
+            margin-left: 240px;
             margin-top: 1px;
             margin-bottom: 450px;
             padding: 15px;
@@ -60,6 +64,11 @@
             margin-bottom: 10px;
             border: 2px solid #ccc;
             border-radius: 4px;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #304949;
+            box-shadow: 0 0 5px rgba(48, 73, 73, 0.5);
         }
         button {
             background-color: darkgray;
@@ -98,7 +107,21 @@
         "Ter um Ambiente Inovador"
     ];
 
-    const clickedMenuItems = new Set(); // Conjunto para armazenar itens clicados
+    const clickedMenuItems = new Set();
+
+    function smoothScrollToElement(element) {
+        element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+    }
+
+    function handleFirstCharacter(title, textArea, menuItem) {
+        if (!textArea.hasAttribute('data-has-content')) {
+            textArea.setAttribute('data-has-content', 'true');
+            selectMenuItem(menuItem, false);
+        }
+    }
 
     function createForms() {
         const container = document.getElementById("forms-container");
@@ -106,51 +129,95 @@
 
         formTitles.forEach(title => {
             const form = document.createElement("form");
-            form.id = `form-${title.replace(/\s+/g, '-')}`; // Adiciona um ID ao formulário
+            form.id = `form-${title.replace(/\s+/g, '-')}`;
             form.innerHTML = `
                 <h2>${title}</h2>
                 <label for="textarea-${title.replace(/\s+/g, '-')}">${title}:</label>
-                <textarea id="textarea-${title.replace(/\s+/g, '-')}" rows="4" oninput="updateMenuColor('${title}')"></textarea>
+                <textarea id="textarea-${title.replace(/\s+/g, '-')}" 
+                          rows="4" 
+                          oninput="updateMenuColor('${title}')"
+                          onfocus="highlightMenuItem('${title}')"
+                          onblur="removeMenuHighlight('${title}')"></textarea>
             `;
             container.appendChild(form);
 
-            // Criar o item do menu
             const menuItem = document.createElement("a");
-            menuItem.href = `#form-${title.replace(/\s+/g, '-')}`; // Link para o formulário
+            menuItem.href = `#form-${title.replace(/\s+/g, '-')}`;
             menuItem.innerText = title;
-            menuItem.id = `menu-item-${title.replace(/\s+/g, '-')}`; // Adiciona um ID ao item do menu
-            menuItem.onclick = () => selectMenuItem(menuItem); // Adiciona evento de clique
+            menuItem.id = `menu-item-${title.replace(/\s+/g, '-')}`;
+            menuItem.onclick = (e) => {
+                e.preventDefault();
+                selectMenuItem(menuItem);
+            };
             menuItems.appendChild(menuItem);
         });
     }
 
-    function selectMenuItem(menuItem) {
-        // Reseta a cor de fundo de todos os itens do menu
+    function highlightMenuItem(title) {
         const allMenuItems = document.querySelectorAll('#menu a');
         allMenuItems.forEach(item => {
-            item.style.backgroundColor = '#2b3e3e'; // Cor padrão
+            item.classList.remove('active');
         });
 
-        // Muda a borda do item clicado anteriormente para cinza claro
+        const menuItem = document.getElementById(`menu-item-${title.replace(/\s+/g, '-')}`);
+        if (menuItem) {
+            menuItem.classList.add('active');
+            menuItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function removeMenuHighlight(title) {
+        const menuItem = document.getElementById(`menu-item-${title.replace(/\s+/g, '-')}`);
+        if (menuItem && !clickedMenuItems.has(menuItem.id)) {
+            menuItem.classList.remove('active');
+        }
+    }
+
+    function selectMenuItem(menuItem, shouldFocus = true) {
+        const allMenuItems = document.querySelectorAll('#menu a');
+        allMenuItems.forEach(item => {
+            item.classList.remove('active');
+            item.style.backgroundColor = '#2b3e3e';
+        });
+
         if (clickedMenuItems.has(menuItem.id)) {
-            menuItem.style.border = '2px solid lightgray'; // Mantém a borda cinza claro
+            menuItem.style.border = '2px solid lightgray';
         } else {
-            // Adiciona a borda cinza claro ao item clicado
-            menuItem.style.border = '2px solid lightgray'; 
-            clickedMenuItems.add(menuItem.id); // Adiciona ao conjunto de itens clicados
+            menuItem.style.border = '2px solid lightgray';
+            clickedMenuItems.add(menuItem.id);
         }
 
-        // Muda a cor de fundo do item selecionado
-        menuItem.style.backgroundColor = 'black';
+        menuItem.classList.add('active');
+
+        const menuItemId = menuItem.id;
+        const formTitle = menuItemId.replace('menu-item-', '');
+        const textarea = document.getElementById(`textarea-${formTitle}`);
+        
+        if (textarea && shouldFocus) {
+            smoothScrollToElement(textarea);
+            setTimeout(() => {
+                textarea.focus();
+            }, 500);
+        }
     }
 
     function updateMenuColor(title) {
         const textArea = document.getElementById(`textarea-${title.replace(/\s+/g, '-')}`);
         const menuItem = document.getElementById(`menu-item-${title.replace(/\s+/g, '-')}`);
-        if (textArea.value.trim() !== "") {
-            menuItem.style.color = "yellow"; // Muda a cor para amarelo se preenchido
-        } else {
-            menuItem.style.color = "#83bfbf"; // Cor padrão se não preenchido
+        
+        if (textArea && menuItem) {
+            if (textArea.value.trim() !== "") {
+                handleFirstCharacter(title, textArea, menuItem);
+                
+                if (textArea.value.length < 5) {
+                    menuItem.style.color = "red";
+                } else {
+                    menuItem.style.color = "yellow";
+                }
+            } else {
+                menuItem.style.color = "#83bfbf";
+                textArea.removeAttribute('data-has-content');
+            }
         }
     }
 
@@ -159,7 +226,7 @@
         formTitles.forEach(title => {
             const textArea = document.getElementById(`textarea-${title.replace(/\s+/g, '-')}`);
             if (textArea) {
-                state[title] = textArea.value; // Captura o valor
+                state[title] = textArea.value;
             }
         });
 
@@ -171,10 +238,10 @@
         const a = document.createElement("a");
         a.href = url;
         a.download = `${fileName}.json`;
-        document.body.appendChild(a); // Adiciona o link ao DOM
+        document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a); // Remove o link após o download
-        URL.revokeObjectURL(url); // Libera a URL
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     function loadState() {
@@ -190,7 +257,8 @@
                     const textArea = document.getElementById(`textarea-${title.replace(/\s+/g, '-')}`);
                     if (textArea) {
                         textArea.value = state[title];
-                        updateMenuColor(title); // Atualiza a cor do menu ao carregar o estado
+                        textArea.removeAttribute('data-has-content');
+                        updateMenuColor(title);
                     }
                 }
             };
@@ -199,7 +267,6 @@
         input.click();
     }
 
-    // Inicializa os formulários ao carregar a página
     createForms();
 </script>
 
